@@ -206,6 +206,7 @@ def ExecuteSequence(SP, MV):
 		seq_step = 0   in minutes
 		seq_timer = 0.0	
 	"""
+	
 	#Make timer and seq_sep_input global and persistent over executions of function
 	global seq_timer
 	global seq_step_input
@@ -533,6 +534,10 @@ if __name__ == "__main__":
 				ext_temp = Read_ext_temp(0)
 				MV = ReadMV(thermocouple)
 				SP = ExecuteSequence(SP, MV)
+				#This is ugly, but is easiest to do here, 
+				#If we are in manual mode HMI output scaling works better if SP=MV
+				if (mode=='man' or mode=='off'):
+					SP=MV
 				pid = PID_Control(mode,SP,MV,OP,P,I,D,error_last,error_int,interval)
 				OP = pid[0]
 				error_last = pid[1]
