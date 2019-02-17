@@ -237,8 +237,21 @@ def ExecuteSequence(SP, MV):
 	"""
 	OK, now we should know what step to use.
 	If we are in step 0 (=sequence inactive) or beyond the last sequence step,
-	 we shoud do absolutely nothing, so we start with that
+	 we shoud do absolutely nothing, so we start with that, after telling the world what we are about to do
 	"""
+	#Write sequence status to file so it can be shown in HMI
+	print("Writing sequence status")
+	try:
+		with open("/var/tmp/sequence_status","w") as filehandle:
+			filehandle.write(str(seq_step) + "\n" + str(seq_timer) + "\n");		
+	
+	except:
+		print("Write /var/tmp/sequence_status failure!")
+		raise
+	
+	if filehandle.closed != 0:
+		filehandle.close()
+	
 	print ("seq_step:" ,seq_step)
 	if (int(seq_step) == 0) or (int(seq_step) > len(sequencelines)-1):
 		print("Sequence inactive.")
@@ -345,7 +358,8 @@ def ExecuteSequence(SP, MV):
 	else:
 		#No known command found, increment the step counter and try next!
 		seq_step = int(seq_step)+1
-		return SP	
+		return SP
+
 
 def ReadMV(thermocouple):
 	"""Read MW from sensor (or other input)"""
