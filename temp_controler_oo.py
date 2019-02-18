@@ -667,7 +667,7 @@ class PIDControl():
 		self.e_int = e_int
 	
 	def Update(self,mode="off", SP=0, MV=0, OP=0, P=-0.1, I=1, D=0, interval=1000, e_last=0, e_int=0):
-				self.mode = mode
+		self.mode = mode
 		self.SP = SP
 		self.MV = MV
 		self.OP = OP
