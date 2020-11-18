@@ -1,0 +1,13 @@
+1
+1 new-sp 40
+2 hold-for 240
+3 ramp-to-in 230 90
+4 hold-for 180
+5 ramp-to-in 700 180
+6 hold-for 120
+7 ramp-to-in 500 1
+end
+8 ramp-to-in 700 90
+9 hold-for 120
+10 ramp-to-at 500 25
+end

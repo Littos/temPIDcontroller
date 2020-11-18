@@ -151,12 +151,12 @@ class MAX31855Error(Exception):
 def SendSerialOP():
 	"""Send serial controller output by GPIOpins and USB"""
 
-def PWM(pwm,mode,OP):
+def PWM(pwm,mode,OP,PWM_max_duty_cycle):
 	"""Generate GPIO output of suitable length for control"""
 	#See https://sourceforge.net/p/raspberry-gpio-python/wiki/PWM/
 	
 	if (mode == 'aut' or mode == 'man'):
-		pwm.ChangeDutyCycle(OP)
+		pwm.ChangeDutyCycle(OP/100.0*PWM_max_duty_cycle)
 	else:
 		#For all undefined modes set pwm to 0 for safety reasons
 		pwm.ChangeDutyCycle(0)
@@ -165,7 +165,8 @@ def ReadSettings():
 	"""Read control settings from file. If no File exist
 	initiate default values and save to file
 	mode SP OP P I D exec_int"""
-	settingsfilename = "/usr/share/nginx/www/data_to_cnt"
+	#settingsfilename = "/usr/share/nginx/www/data_to_cnt"
+	settingsfilename = "/home/temperatur/temPIDcontroller/data_to_cnt"
 	
 	try:
 		with open(settingsfilename,"r") as fh:
@@ -213,7 +214,8 @@ def ExecuteSequence(SP, MV):
 	global seq_step
 	
 	"""Read sequence from file, step input and array of step commands"""
-	sequencefilename = "/usr/share/nginx/www/sequence"
+	#sequencefilename = "/usr/share/nginx/www/sequence"
+	sequencefilename = "/home/temperatur/temPIDcontroller/sequence"
 
 	try:
 		with open(sequencefilename,"r") as fh:
@@ -242,11 +244,13 @@ def ExecuteSequence(SP, MV):
 	#Write sequence status to file so it can be shown in HMI
 	print("Writing sequence status")
 	try:
-		with open("/var/tmp/sequence_status","w") as filehandle:
+		#with open("/var/tmp/sequence_status","w") as filehandle:
+		with open("/home/temperatur/temPIDcontroller/volatile/sequence_status","w") as filehandle:
 			filehandle.write(str(seq_step) + "\n" + str(seq_timer) + "\n");		
 	
 	except:
-		print("Write /var/tmp/sequence_status failure!")
+		#print("Write /var/tmp/sequence_status failure!")
+		print("Write /home/temperatur/temPIDcontroller/volatile/sequence_status failure!")
 		raise
 	
 	if filehandle.closed != 0:
@@ -361,10 +365,55 @@ def ExecuteSequence(SP, MV):
 		return SP
 
 
+def OLD_VERSION_OF_ReadMV(thermocouple):
+	"""Read MW from sensor (or other input)"""
+	#start=time.perf_counter()
+	#Read n separate values and report the average of the m closest values in order to filter out erratic readings
+	n=3
+	m=2
+	temp=[]
+	dev=[]
+	temp_list=[]
+	sum_temp=0
+	
+	for i in range(n):
+		temp.append(thermocouple.get())
+		
+	average_temp=sum(temp)/len(temp)
+	for i in range(n):
+		dev.append(temp[i]-average_temp)
+		
+	for i in range(n):
+		temp_list.append([temp[i],dev[i]])
+	
+	temp_list.sort(key = lambda x: x[1])
+	for i in range(m):
+		sum_temp=sum_temp+temp_list[i][0]
+		#print(temp_list[i][0])
+		
+	#print(sum_temp)
+	#print(m)
+		
+	measured_temp=sum_temp/m
+	
+	#end=time.perf_counter()
+	#print("read-time" + str(end-start))
+	return measured_temp
+
 def ReadMV(thermocouple):
 	"""Read MW from sensor (or other input)"""
-	temp=thermocouple.get()
-	return temp
+	#start=time.perf_counter()
+	#Read n separate values and report the highest value in order to filter out erratic readings
+	n=10
+	temp=[]
+	
+	for i in range(n):
+		temp.append(thermocouple.get())
+
+	max_temp=max(temp)
+	print(sorted(temp))
+	return max_temp
+	
 	
 def Read_ext_temp(ext_temp_in_use):
 	ext_temp = 0
@@ -434,8 +483,10 @@ def PID_Control(mode,SP,MV,OP,P,I,D,e_last,e_int,interval):
 def WriteOutput(SP,MV,OP,no_of_datapoints):
 	"""Write output to file for GUI presentation in web browser"""
 	no_of_records = no_of_datapoints
-	mirrorfilename = "/var/tmp/temperatures"
-	outputfilename = "/var/tmp/temperatures_workfile"
+	#mirrorfilename = "/var/tmp/temperatures"
+	mirrorfilename = "/home/temperatur/temPIDcontroller/volatile/temperatures"
+	#outputfilename = "/var/tmp/temperatures_workfile"
+	outputfilename = "/home/temperatur/temPIDcontroller/volatile/temperatures_workfile"
 	
 	try:
 		filehandle = open(outputfilename,"a+")
@@ -516,6 +567,7 @@ if __name__ == "__main__":
 	GPIO.setup(17, GPIO.OUT) # Set GPIO pin as output
 	pwm = GPIO.PWM(17,1) #GPIO 17, 1 Hz period frequency (1% dc @ 1Hz -> 0,01s on time)
 	pwm.start(0) #Start with duty cycle 0 (dc:0-100%)
+	PWM_max_duty_cycle = 40 #Maximum PWM duty cycle, corresponds to 100% controller output
 		
 	# Initialize execution timer before reading from settings
 	interval = 1000	#ms
@@ -561,7 +613,7 @@ if __name__ == "__main__":
 				
 				no_of_datapoints = 60*log_time/(interval/1000.0)
 				WriteOutput(SP,MV,OP,no_of_datapoints)
-				PWM(pwm,mode,OP)
+				PWM(pwm,mode,OP,PWM_max_duty_cycle)
 			
 				print("MV: " + str(MV) + "  SP:", str(SP), "\n")
 						

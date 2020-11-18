@@ -1,0 +1,10 @@
+[Unit]
+Description=tempPIDcontroler service.
+
+[Service]
+Type=simple
+ExecStart=/home/temperatur/temPIDcontroller/temp_controler.py &
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
