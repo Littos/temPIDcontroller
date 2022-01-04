@@ -21,7 +21,7 @@ grep -Po '^sudo.+:\K.*$' /etc/group
 Add user to sudoers: 
 sudo adduser USERNAME sudo
 
-Add user to group gpio
+Add user to group gpio:
 sudo adduser USERNAME gpio
 
 Verify that python3 is installed.
@@ -39,9 +39,10 @@ Clone web interface files: Borde inkluderas i pythonfilerna!
 cd /home/homedir/Python
 git clone https://github.com/Littos/temPIDweb-interface.git
 
-Set up /var/tmp to be a RAM instead of on sd card by adding to /etc/fstab
-(othervise the SD card may break quickly). Kanske skippa /vat/tmp och istället lägga en mapp under tempcontroller i tmpfs för dataöverföring? Möjligen lägga 
-tmpfs /var/tmp tmpfs nodev,nosuid,size=10M 0 0
+Set up /home/temperatur/temPIDcontroller/volatile to be a RAM instead of on sd card by adding to /etc/fstab
+(othervise the SD card may break quickly). 
+mkdir /home/temperatur/temPIDcontroller/volatile
+tmpfs /home/temperatur/temPIDcontroller/volatile tmpfs nodev,nosuid,size=10M 0 0
 Run sudo mount -a to re-mount according to fstab without rebooting
  
 Inatall nginx and php-fpm
@@ -125,7 +126,7 @@ Change permissions on files needed to be accessed by nginx:
 Make sure /java/ libary is copied to /tempPIDconrtoller alondside with all the relevan php files. 
 Download java library for d3.js is downloaded from https://d3js.org/ and placed in /home/HOMEDIR/temPIDcontroller
  
-Sudo chown -R :www-data java/
+sudo chown -R :www-data java/
 cd /home/HOMEDIR/index.php
 sudo chown :www-data temPIDcontroller/
 cd /home/HOMEDIR/temPIDcontroller
